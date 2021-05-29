@@ -1,0 +1,5 @@
+SERVER_PORT: ":8443"
+SERVER_SSL_ENABLED: false
+SERVER_ENABLING_PROFILE: true
+
+#mysql configurations
