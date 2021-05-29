@@ -1,4 +1,4 @@
-# healthEvaluationApp
+# Health Evaluation Backend Application 
 ## How to run locally
 
 1. install latest go from `https://golang.org/`
