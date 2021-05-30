@@ -11,6 +11,7 @@ type service struct {
 
 type IMySql interface {
 	GetUserLogin(un string, pw string) models.Users
+	SaveUser(user models.Users) bool
 }
 
 func NewMySqlRepo() IMySql {
@@ -22,4 +23,8 @@ func NewMySqlRepo() IMySql {
 // GetUserLogin retrieves the login credentials
 func (svc *service) GetUserLogin(un string, pw string) models.Users {
 	return svc.MySql.GetUserLogin(un, pw)
+}
+
+func (svc *service) SaveUser(user models.Users) bool {
+	return svc.MySql.SaveUser(user)
 }

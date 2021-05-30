@@ -5,6 +5,7 @@ import (
 	"healtEvaluationApp/cmd/webapp/config"
 	"healtEvaluationApp/internal/healthEvaluationApp/common"
 	"healtEvaluationApp/internal/healthEvaluationApp/models"
+	"strconv"
 
 	_ "github.com/go-sql-driver/mysql"
 	log "github.com/sirupsen/logrus"
@@ -19,7 +20,10 @@ type service struct {
 }
 
 type IMySql interface {
+	// GetUserLogin - Retrieves User Details by Username and Password.
 	GetUserLogin(un string, pw string) models.Users
+	// SaveUser - Inserts new user in db.
+	SaveUser(user models.Users) bool
 }
 
 func NewService() IMySql {
@@ -28,6 +32,7 @@ func NewService() IMySql {
 	return &svc
 }
 
+// Set() - setting all the needed configurations in mysql_repository
 func (svc *service) Set() {
 	svc.DatabaseName = config.Registry.GetString("DB_NAME")
 	svc.DbDriver = config.Registry.GetString("DB_DRIVER")
@@ -37,7 +42,6 @@ func (svc *service) Set() {
 	log.Info("DATABASE_CONNECTED")
 }
 
-// GetUserLogin Retrieves User Details by Username and Password
 func (svc *service) GetUserLogin(un string, pw string) models.Users {
 	user := models.Users{}
 	svc.Db = svc.openDBConnection()
@@ -62,6 +66,29 @@ func (svc *service) GetUserLogin(un string, pw string) models.Users {
 
 	defer result.Close()
 	return user
+}
+
+func (svc *service) SaveUser(user models.Users) bool {
+	isExist := true
+	// checks the user if its already in db
+	newUser := svc.GetUserLogin(user.Username, user.Password)
+	if newUser.UserID > 0 {
+		log.Warn("Username and Password are already in DB. Try again!")
+		return false
+	}
+	svc.Db = svc.openDBConnection()
+	queryString := common.InsertUserQueryFirstClause + "'" + user.Username + "','" + user.Password + "'," + strconv.Itoa(user.UserType) + ",now()" + common.InsertUserQueryEndClause
+
+	insertResult, err := svc.Db.Query(queryString)
+	defer svc.Db.Close()
+	if err != nil {
+		log.Errorf(err.Error())
+		return false
+	}
+
+	defer insertResult.Close()
+	log.Printf("Successfully inserted record!")
+	return isExist
 }
 
 func (svc *service) openDBConnection() *sql.DB {

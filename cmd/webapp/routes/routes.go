@@ -31,8 +31,10 @@ func Set(httpService *service.Service) {
 	initiateRoute(httpService, routeHandler)
 }
 
+// initiateRote initialize the routes available in the application
 func initiateRoute(httpService *service.Service, routeHandler *routesHandler) {
 	httpService.Router.Post(common.GetUserResource, routeHandler.GetUserLogin)
+	httpService.Router.Post(common.SaveUserResource, routeHandler.SaveUser)
 }
 
 type routesHandler struct {
@@ -40,6 +42,7 @@ type routesHandler struct {
 }
 type IUserRoutes interface {
 	GetUserLogin(w http.ResponseWriter, r *http.Request)
+	SaveUser(w http.ResponseWriter, r *http.Request)
 }
 
 func newRoutes() *routesHandler {
@@ -48,7 +51,7 @@ func newRoutes() *routesHandler {
 	}
 }
 
-// GetUserLogin
+// GetUserLogin route handler
 func (svc *routesHandler) GetUserLogin(w http.ResponseWriter, r *http.Request) {
 	log.Println("GET USER Invoked")
 	utility.Debug("GET", "INVOKED")
@@ -56,16 +59,20 @@ func (svc *routesHandler) GetUserLogin(w http.ResponseWriter, r *http.Request) {
 	resp := IResponse{}
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		log.Printf("Error reading body: %v", err)
-		http.Error(w, "can't read body", http.StatusBadRequest)
+		log.Errorf("Error reading body: %v", err)
+		utility.LogPrometheusErr("Error reading body: %v", err.Error())
+		errBody := response.BuildErrorMessage(http.StatusBadRequest, err.Error())
+		response.Error(w, errBody, http.StatusBadRequest)
 		return
 	}
 	fmt.Println(fmt.Sprintf("%v", string(body)))
 	unmarshalErr := json.Unmarshal(body, &users)
 	if unmarshalErr != nil {
-		log.Printf("Error unmarshalling body: %v", unmarshalErr)
+		log.Errorf("Error unmarshalling body: %v", unmarshalErr)
 		utility.LogPrometheusErr("Unmarshal error", unmarshalErr.Error())
-		http.Error(w, unmarshalErr.Error(), http.StatusInternalServerError)
+		errBody := response.BuildErrorMessage(http.StatusBadRequest, err.Error())
+		response.Error(w, errBody, http.StatusBadRequest)
+		return
 	}
 
 	if len(users.Username) > 0 && len(users.Password) > 0 {
@@ -82,6 +89,42 @@ func (svc *routesHandler) GetUserLogin(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// SaveUser route handler
+func (svc *routesHandler) SaveUser(w http.ResponseWriter, r *http.Request) {
+	log.Println("POST USER Invoked")
+	utility.Debug("POST", "INVOKED")
+	users := models.Users{}
+	resp := IResponse{}
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Printf("Error reading body: %v", err)
+		utility.LogPrometheusErr("Error reading body: %v", err.Error())
+		errBody := response.BuildErrorMessage(http.StatusBadRequest, err.Error())
+		response.Error(w, errBody, http.StatusBadRequest)
+		return
+	}
+
+	unmarshalErr := json.Unmarshal(body, &users)
+	if unmarshalErr != nil {
+		log.Errorf("Error unmarshal body: %v", unmarshalErr)
+		utility.LogPrometheusErr("Unmarshal error", unmarshalErr.Error())
+		errBody := response.BuildErrorMessage(http.StatusBadRequest, unmarshalErr.Error())
+		response.Error(w, errBody, http.StatusBadRequest)
+		return
+	}
+
+	if svc.HealthEvaluationApp.SaveUser(users) {
+		resp.InsertSuccessful = true
+		response.Success(w, resp)
+		return
+	}
+
+	resp.InsertSuccessful = false
+	response.Success(w, resp)
+
+}
+
 type IResponse struct {
-	IsExist bool `json:"isExist"`
+	InsertSuccessful bool `json:"isInsertSuccessful"`
+	IsExist          bool `json:"isExist"`
 }
