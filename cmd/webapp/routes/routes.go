@@ -76,18 +76,21 @@ func (svc *routesHandler) GetUserLogin(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, errBody, http.StatusBadRequest)
 		return
 	}
-
-	if len(users.Username) > 0 && len(users.Password) > 0 {
-		finalUser := svc.HealthEvaluationApp.GetUserLogin(users.Username, users.Password)
-		if finalUser.UserID > 0 {
-			resp.IsExist = true
-			response.Success(w, resp)
-			return
-		}
-		resp.IsExist = false
-		response.Success(w, resp)
+	validationErr := utility.ValidateUser(users, 2)
+	if validationErr != nil {
+		errBody := response.BuildErrorMessage(http.StatusBadRequest, validationErr.Error())
+		response.Error(w, errBody, http.StatusBadRequest)
 		return
 	}
+
+	finalUser := svc.HealthEvaluationApp.GetUserLogin(users.Username, users.Password)
+	if finalUser.UserID > 0 {
+
+		response.Success(w, finalUser)
+		return
+	}
+	resp.IsExist = false
+	response.Success(w, resp)
 
 }
 
@@ -115,7 +118,20 @@ func (svc *routesHandler) SaveUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if svc.HealthEvaluationApp.SaveUser(users) {
+	validationErr := utility.ValidateUser(users, 3)
+	if validationErr != nil {
+		errBody := response.BuildErrorMessage(http.StatusBadRequest, validationErr.Error())
+		response.Error(w, errBody, http.StatusBadRequest)
+		return
+	}
+
+	isSuccess, sErr := svc.HealthEvaluationApp.SaveUser(users)
+	if sErr != nil {
+		errBody := response.BuildErrorMessage(http.StatusBadRequest, sErr.Error())
+		response.Error(w, errBody, getProperStatCodes(sErr.Error(), http.StatusBadRequest))
+		return
+	}
+	if isSuccess {
 		resp.InsertSuccessful = true
 		response.Success(w, resp)
 		return
@@ -148,6 +164,12 @@ func (svc *routesHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, errBody, http.StatusBadRequest)
 		return
 	}
+	validationErr := utility.ValidateUser(users, 1)
+	if validationErr != nil {
+		errBody := response.BuildErrorMessage(http.StatusBadRequest, validationErr.Error())
+		response.Error(w, errBody, http.StatusBadRequest)
+		return
+	}
 	if svc.HealthEvaluationApp.UpdateUser(users) {
 		resp.UpdateSuccessful = true
 		response.Success(w, resp)
@@ -162,4 +184,12 @@ type IResponse struct {
 	UpdateSuccessful bool `json:"isUpdateSuccessful"`
 	InsertSuccessful bool `json:"isInsertSuccessful"`
 	IsExist          bool `json:"isExist"`
+}
+
+func getProperStatCodes(msg string, statCode int) int {
+	if msg == common.TokenNotPresent {
+		statCode = http.StatusForbidden
+	}
+
+	return statCode
 }

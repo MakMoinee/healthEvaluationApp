@@ -41,8 +41,13 @@ func Error(w http.ResponseWriter, payload interface{}, statusCode int) {
 // BuildErrorMessage Error message builder
 func BuildErrorMessage(status int, msg string) ErrorResponse {
 	errResponse := ErrorResponse{}
-	errResponse.StatusCode = status
-	errResponse.ErrorMessage = msg
+	if common.TokenNotPresent == msg {
+		errResponse.StatusCode = http.StatusForbidden
+		errResponse.ErrorMessage = msg
+	} else {
+		errResponse.StatusCode = status
+		errResponse.ErrorMessage = msg
+	}
 
 	return errResponse
 }

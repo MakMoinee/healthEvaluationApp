@@ -19,6 +19,7 @@ type Users struct {
 	Password         string `json:"password,omitempty"`
 	UserType         int    `json:"userType,omitempty"`
 	LastModifiedDate string `json:"lastModifiedDate,omitempty"`
+	UserToken        string `json:"userToken,omitempty"`
 }
 
 // Teachers data model
@@ -39,4 +40,12 @@ type Profession struct {
 	ProfessionID     int    `json:"professionId,omitempty"`
 	ProfessionName   string `json:"professionName,omitempty"`
 	LastModifiedDate string `json:"lastModifiedDate,omitempty"`
+}
+
+// Token data model
+type Tokens struct {
+	TokenID     int    `json:"tokenId,omitempty"`
+	TokenString string `json:"tokenString,omitempty"`
+	UserID      int    `json:"userId,omitempty"`
+	DateCreated string `json:"dateCreation,omitempty"`
 }

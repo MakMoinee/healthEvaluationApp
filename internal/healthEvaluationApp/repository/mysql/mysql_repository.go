@@ -7,6 +7,7 @@ import (
 	"healtEvaluationApp/internal/healthEvaluationApp/common"
 	"healtEvaluationApp/internal/healthEvaluationApp/models"
 	"strconv"
+	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 	log "github.com/sirupsen/logrus"
@@ -26,9 +27,13 @@ type IMySql interface {
 	// GetUserById - Retrievs User Details by the specified user Id
 	GetUserById(userId int) models.Users
 	// SaveUser - Inserts new user in db.
-	SaveUser(user models.Users) bool
+	SaveUser(user models.Users) (bool, error)
 	// UpdateUser - Updates the user in db
 	UpdateUser(user models.Users) bool
+
+	// GetTokenById - Get the token of the specified user
+	GetTokenById(userToken string) models.Tokens
+	GenerateNewToken(userId int) (models.Tokens, error)
 }
 
 func NewService() IMySql {
@@ -68,7 +73,6 @@ func (svc *service) GetUserLogin(un string, pw string) models.Users {
 		// and then print out the tag's Name attribute
 		log.Printf("MYSQL Query was successful")
 	}
-
 	defer result.Close()
 	return user
 }
@@ -101,27 +105,46 @@ func (svc *service) GetUserById(userId int) models.Users {
 
 }
 
-func (svc *service) SaveUser(user models.Users) bool {
+func (svc *service) SaveUser(user models.Users) (bool, error) {
 	isExist := true
-	// checks the user if its already in db
-	newUser := svc.GetUserLogin(user.Username, user.Password)
-	if newUser.UserID > 0 {
-		log.Warn("Username and Password are already in DB. Try again!")
-		return false
-	}
-	svc.Db = svc.openDBConnection()
-	queryString := common.InsertUserQueryFirstClause + "'" + user.Username + "','" + user.Password + "'," + strconv.Itoa(user.UserType) + ",now()" + common.InsertUserQueryEndClause
 
-	insertResult, err := svc.Db.Query(queryString)
-	defer svc.Db.Close()
-	if err != nil {
-		log.Errorf(err.Error())
-		return false
-	}
+	// checks the user token
+	token := svc.GetTokenById(user.UserToken)
+	if token.TokenID > 0 {
+		expDate, parseErr := time.Parse(common.TimeFormat, token.DateCreated)
+		if parseErr != nil {
+			log.Errorf(parseErr.Error())
+			return false, parseErr
+		}
+		if expDate.Add(1).Before(time.Now()) {
+			log.Errorf("token got expired. login again")
+			return false, fmt.Errorf("token got expired. login again")
+		}
 
-	defer insertResult.Close()
-	log.Printf("Successfully inserted record!")
-	return isExist
+		// checks the user if its already in db
+		newUser := svc.GetUserLogin(user.Username, user.Password)
+		if newUser.UserID > 0 {
+			log.Warn("Username and Password are already in DB. Try again!")
+			return false, fmt.Errorf("username and password are already in db, try again later")
+		}
+
+		svc.Db = svc.openDBConnection()
+		queryString := common.InsertUserQueryFirstClause + "'" + user.Username + "','" + user.Password + "'," + strconv.Itoa(user.UserType) + ",now()" + common.InsertUserQueryEndClause
+
+		insertResult, err := svc.Db.Query(queryString)
+		defer svc.Db.Close()
+		if err != nil {
+			log.Errorf(err.Error())
+			return false, err
+		}
+
+		defer insertResult.Close()
+		log.Printf("Successfully inserted record!")
+		return isExist, nil
+	}
+	log.Errorf(common.TokenNotPresent)
+	return false, fmt.Errorf(common.TokenNotPresent)
+
 }
 
 func (svc *service) UpdateUser(user models.Users) bool {
