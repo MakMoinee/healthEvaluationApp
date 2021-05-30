@@ -2,7 +2,6 @@ package mysql
 
 import (
 	"database/sql"
-	"fmt"
 	"healtEvaluationApp/cmd/webapp/config"
 	"healtEvaluationApp/internal/healthEvaluationApp/common"
 	"healtEvaluationApp/internal/healthEvaluationApp/models"
@@ -43,7 +42,6 @@ func (svc *service) GetUserLogin(un string, pw string) models.Users {
 	user := models.Users{}
 	svc.Db = svc.openDBConnection()
 	str := common.GetUserLoginQueryFirstClause + "`username`='" + un + "' and `password`='" + pw + "'" + common.GetUserLoginQueryEndClause
-	fmt.Println(str)
 	// perform a db.Query insert
 	result, err := svc.Db.Query(str)
 	defer svc.Db.Close()
@@ -59,11 +57,7 @@ func (svc *service) GetUserLogin(un string, pw string) models.Users {
 			log.Errorf(err.Error())
 		}
 		// and then print out the tag's Name attribute
-		log.Printf(fmt.Sprintf("%v", user.UserID))
-		log.Printf(user.Username)
-		log.Printf(user.Password)
-		log.Printf(fmt.Sprintf("%v", user.UserType))
-		log.Printf(user.LastModifiedDate)
+		log.Printf("MYSQL Query was successful")
 	}
 
 	defer result.Close()

@@ -64,6 +64,7 @@ func (svc *routesHandler) GetUserLogin(w http.ResponseWriter, r *http.Request) {
 	unmarshalErr := json.Unmarshal(body, &users)
 	if unmarshalErr != nil {
 		log.Printf("Error unmarshalling body: %v", unmarshalErr)
+		utility.LogPrometheusErr("Unmarshal error", unmarshalErr.Error())
 		http.Error(w, unmarshalErr.Error(), http.StatusInternalServerError)
 	}
 
