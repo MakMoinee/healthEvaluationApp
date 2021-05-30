@@ -1,26 +1,25 @@
 package healthevaluationapp
 
+import (
+	"healtEvaluationApp/internal/healthEvaluationApp/models"
+	"healtEvaluationApp/internal/healthEvaluationApp/repository/mysql"
+)
+
 type service struct {
-	Username string
-	Password string
-	DbName   string
+	MySql mysql.IMySql
 }
 
 type IMySql interface {
-	GetUserLogin(un string, pw string)
+	GetUserLogin(un string, pw string) models.Users
 }
 
 func NewMySqlRepo() IMySql {
 	svc := service{}
-
+	svc.MySql = mysql.NewService()
 	return &svc
 }
 
-func (svc *service) set() {
-	svc.DbName = ""
-}
-
 // GetUserLogin retrieves the login credentials
-func (svc *service) GetUserLogin(un string, pw string) {
-
+func (svc *service) GetUserLogin(un string, pw string) models.Users {
+	return svc.MySql.GetUserLogin(un, pw)
 }
