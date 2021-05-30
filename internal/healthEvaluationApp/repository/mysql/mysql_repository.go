@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"database/sql"
+	"fmt"
 	"healtEvaluationApp/cmd/webapp/config"
 	"healtEvaluationApp/internal/healthEvaluationApp/common"
 	"healtEvaluationApp/internal/healthEvaluationApp/models"
@@ -22,8 +23,12 @@ type service struct {
 type IMySql interface {
 	// GetUserLogin - Retrieves User Details by Username and Password.
 	GetUserLogin(un string, pw string) models.Users
+	// GetUserById - Retrievs User Details by the specified user Id
+	GetUserById(userId int) models.Users
 	// SaveUser - Inserts new user in db.
 	SaveUser(user models.Users) bool
+	// UpdateUser - Updates the user in db
+	UpdateUser(user models.Users) bool
 }
 
 func NewService() IMySql {
@@ -68,6 +73,34 @@ func (svc *service) GetUserLogin(un string, pw string) models.Users {
 	return user
 }
 
+func (svc *service) GetUserById(userId int) models.Users {
+	users := models.Users{}
+	queryString := fmt.Sprintf(common.GetUserByIdQueryClause, strconv.Itoa(userId))
+
+	svc.Db = svc.openDBConnection()
+
+	result, err := svc.Db.Query(queryString)
+	if err != nil {
+		log.Error(err.Error())
+		return users
+	}
+
+	defer svc.Db.Close()
+
+	for result.Next() {
+		err := result.Scan(&users.UserID, &users.Username, &users.Password, &users.UserType, &users.LastModifiedDate)
+		if err != nil {
+			log.Error(err.Error())
+			return users
+		}
+
+	}
+	defer result.Close()
+
+	return users
+
+}
+
 func (svc *service) SaveUser(user models.Users) bool {
 	isExist := true
 	// checks the user if its already in db
@@ -89,6 +122,29 @@ func (svc *service) SaveUser(user models.Users) bool {
 	defer insertResult.Close()
 	log.Printf("Successfully inserted record!")
 	return isExist
+}
+
+func (svc *service) UpdateUser(user models.Users) bool {
+	isUpdate := false
+	// checks the user if exist
+	newUser := svc.GetUserById(user.UserID)
+	if newUser.UserID > 0 {
+		svc.Db = svc.openDBConnection()
+		queryString := fmt.Sprintf(common.UpdateUserQueryClause, newUser.Username, newUser.Password, strconv.Itoa(newUser.UserID))
+		updateResult, err := svc.Db.Query(queryString)
+		defer svc.Db.Close()
+		if err != nil {
+			log.Errorf(err.Error())
+			return false
+		}
+
+		defer updateResult.Close()
+		log.Printf("Successfully updated record!")
+		isUpdate = true
+	} else {
+		log.Error("Failed to update, User is not in the db. ")
+	}
+	return isUpdate
 }
 
 func (svc *service) openDBConnection() *sql.DB {

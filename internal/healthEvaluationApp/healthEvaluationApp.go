@@ -12,6 +12,7 @@ type service struct {
 type IMySql interface {
 	GetUserLogin(un string, pw string) models.Users
 	SaveUser(user models.Users) bool
+	UpdateUser(user models.Users) bool
 }
 
 func NewMySqlRepo() IMySql {
@@ -27,4 +28,8 @@ func (svc *service) GetUserLogin(un string, pw string) models.Users {
 
 func (svc *service) SaveUser(user models.Users) bool {
 	return svc.MySql.SaveUser(user)
+}
+
+func (svc *service) UpdateUser(user models.Users) bool {
+	return svc.MySql.UpdateUser(user)
 }

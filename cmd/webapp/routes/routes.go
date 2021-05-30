@@ -35,6 +35,7 @@ func Set(httpService *service.Service) {
 func initiateRoute(httpService *service.Service, routeHandler *routesHandler) {
 	httpService.Router.Post(common.GetUserResource, routeHandler.GetUserLogin)
 	httpService.Router.Post(common.SaveUserResource, routeHandler.SaveUser)
+	httpService.Router.Put(common.UpdateUserResource, routeHandler.UpdateUser)
 }
 
 type routesHandler struct {
@@ -43,6 +44,7 @@ type routesHandler struct {
 type IUserRoutes interface {
 	GetUserLogin(w http.ResponseWriter, r *http.Request)
 	SaveUser(w http.ResponseWriter, r *http.Request)
+	UpdateUser(w http.ResponseWriter, r *http.Request)
 }
 
 func newRoutes() *routesHandler {
@@ -124,7 +126,40 @@ func (svc *routesHandler) SaveUser(w http.ResponseWriter, r *http.Request) {
 
 }
 
+func (svc *routesHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
+	log.Println("PUT USER Invoked")
+	utility.Debug("PUT", "INVOKED")
+	users := models.Users{}
+	resp := IResponse{}
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Printf("Error reading body: %v", err)
+		utility.LogPrometheusErr("Error reading body: %v", err.Error())
+		errBody := response.BuildErrorMessage(http.StatusBadRequest, err.Error())
+		response.Error(w, errBody, http.StatusBadRequest)
+		return
+	}
+
+	unmarshalErr := json.Unmarshal(body, &users)
+	if unmarshalErr != nil {
+		log.Errorf("Error unmarshal body: %v", unmarshalErr)
+		utility.LogPrometheusErr("Unmarshal error", unmarshalErr.Error())
+		errBody := response.BuildErrorMessage(http.StatusBadRequest, unmarshalErr.Error())
+		response.Error(w, errBody, http.StatusBadRequest)
+		return
+	}
+	if svc.HealthEvaluationApp.UpdateUser(users) {
+		resp.UpdateSuccessful = true
+		response.Success(w, resp)
+		return
+	}
+
+	resp.UpdateSuccessful = false
+	response.Success(w, resp)
+}
+
 type IResponse struct {
+	UpdateSuccessful bool `json:"isUpdateSuccessful"`
 	InsertSuccessful bool `json:"isInsertSuccessful"`
 	IsExist          bool `json:"isExist"`
 }
