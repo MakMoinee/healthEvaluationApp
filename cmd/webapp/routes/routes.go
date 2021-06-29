@@ -76,7 +76,7 @@ func (svc *routesHandler) GetUserLogin(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, errBody, http.StatusBadRequest)
 		return
 	}
-	validationErr := utility.ValidateUser(users, 2)
+	validationErr := utility.ValidateUser(users, 3)
 	if validationErr != nil {
 		errBody := response.BuildErrorMessage(http.StatusBadRequest, validationErr.Error())
 		response.Error(w, errBody, http.StatusBadRequest)
