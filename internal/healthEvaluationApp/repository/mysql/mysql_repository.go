@@ -7,7 +7,7 @@ import (
 	"healtEvaluationApp/internal/healthEvaluationApp/common"
 	"healtEvaluationApp/internal/healthEvaluationApp/models"
 	"strconv"
-	"time"
+	// "time"
 
 	_ "github.com/go-sql-driver/mysql"
 	log "github.com/sirupsen/logrus"
@@ -115,41 +115,41 @@ func (svc *service) SaveUser(user models.Users) (bool, error) {
 	isExist := true
 
 	// checks the user token
-	token := svc.GetTokenById(user.UserToken)
-	if token.TokenID > 0 {
-		expDate, parseErr := time.Parse(common.TimeFormat, token.DateCreated)
-		if parseErr != nil {
-			log.Errorf(parseErr.Error())
-			return false, parseErr
-		}
-		if expDate.Add(1).Before(time.Now()) {
-			log.Errorf("token got expired. login again")
-			return false, fmt.Errorf("token got expired. login again")
-		}
+	// token := svc.GetTokenById(user.UserToken)
+	// if token.TokenID > 0 {
+	// expDate, parseErr := time.Parse(common.TimeFormat, token.DateCreated)
+	// if parseErr != nil {
+	// 	log.Errorf(parseErr.Error())
+	// 	return false, parseErr
+	// }
+	// if expDate.Add(1).Before(time.Now()) {
+	// 	log.Errorf("token got expired. login again")
+	// 	return false, fmt.Errorf("token got expired. login again")
+	// }
 
-		// checks the user if its already in db
-		newUser := svc.GetUserLogin(user.Username, user.Password)
-		if newUser.UserID > 0 {
-			log.Warn("Username and Password are already in DB. Try again!")
-			return false, fmt.Errorf("username and password are already in db, try again later")
-		}
+	// // checks the user if its already in db
+	// newUser := svc.GetUserLogin(user.Username, user.Password)
+	// if newUser.UserID > 0 {
+	// 	log.Warn("Username and Password are already in DB. Try again!")
+	// 	return false, fmt.Errorf("username and password are already in db, try again later")
+	// }
 
-		svc.Db = svc.openDBConnection()
-		queryString := common.InsertUserQueryFirstClause + "'" + user.Username + "','" + user.Password + "'," + strconv.Itoa(user.UserType) + ",now()" + common.InsertUserQueryEndClause
+	svc.Db = svc.openDBConnection()
+	queryString := common.InsertUserQueryFirstClause + "'" + user.Username + "','" + user.Password + "'," + strconv.Itoa(user.UserType) + ",now()" + common.InsertUserQueryEndClause
 
-		insertResult, err := svc.Db.Query(queryString)
-		defer svc.Db.Close()
-		if err != nil {
-			log.Errorf(err.Error())
-			return false, err
-		}
-
-		defer insertResult.Close()
-		log.Printf("Successfully inserted record!")
-		return isExist, nil
+	insertResult, err := svc.Db.Query(queryString)
+	defer svc.Db.Close()
+	if err != nil {
+		log.Errorf(err.Error())
+		return false, err
 	}
-	log.Errorf(common.TokenNotPresent)
-	return false, fmt.Errorf(common.TokenNotPresent)
+
+	defer insertResult.Close()
+	log.Printf("Successfully inserted record!")
+	return isExist, nil
+	// }
+	// log.Errorf(common.TokenNotPresent)
+	// return false, fmt.Errorf(common.TokenNotPresent)
 
 }
 

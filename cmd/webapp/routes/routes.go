@@ -86,12 +86,12 @@ func (svc *routesHandler) GetUserLogin(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, errBody, http.StatusBadRequest)
 		return
 	}
-	validationErr := utility.ValidateUser(users, 3)
-	if validationErr != nil {
-		errBody := response.BuildErrorMessage(http.StatusBadRequest, validationErr.Error())
-		response.Error(w, errBody, http.StatusBadRequest)
-		return
-	}
+	// validationErr := utility.ValidateUser(users, 3)
+	// if validationErr != nil {
+	// 	errBody := response.BuildErrorMessage(http.StatusBadRequest, validationErr.Error())
+	// 	response.Error(w, errBody, http.StatusBadRequest)
+	// 	return
+	// }
 
 	finalUser := svc.HealthEvaluationApp.GetUserLogin(users.Username, users.Password)
 	if finalUser.UserID > 0 {
@@ -118,6 +118,7 @@ func (svc *routesHandler) SaveUser(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, errBody, http.StatusBadRequest)
 		return
 	}
+	fmt.Println(string(body))
 
 	unmarshalErr := json.Unmarshal(body, &users)
 	if unmarshalErr != nil {
@@ -128,12 +129,12 @@ func (svc *routesHandler) SaveUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	validationErr := utility.ValidateUser(users, 3)
-	if validationErr != nil {
-		errBody := response.BuildErrorMessage(http.StatusBadRequest, validationErr.Error())
-		response.Error(w, errBody, http.StatusBadRequest)
-		return
-	}
+	// validationErr := utility.ValidateUser(users, 2)
+	// if validationErr != nil {
+	// 	errBody := response.BuildErrorMessage(http.StatusBadRequest, validationErr.Error())
+	// 	response.Error(w, errBody, http.StatusBadRequest)
+	// 	return
+	// }
 
 	isSuccess, sErr := svc.HealthEvaluationApp.SaveUser(users)
 	if sErr != nil {
@@ -288,12 +289,12 @@ func (svc *routesHandler) DeleteHabit(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (svc *routesHandler) InsertHabit(w http.ResponseWriter, r *http.Request){
+func (svc *routesHandler) InsertHabit(w http.ResponseWriter, r *http.Request) {
 	log.Info("inserting habit invoked")
 	utility.Debug("POST", "INVOKED")
 
 	validRequest := models.Habit{}
-	resp := IResponse{}
+	// resp := IResponse{}
 
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -339,8 +340,6 @@ type AssessRequest struct {
 	Answer   string `json:"answer,omitempty"`
 	Category int    `json:"category"`
 }
-
-
 
 func getProperStatCodes(msg string, statCode int) int {
 	if msg == common.TokenNotPresent {
