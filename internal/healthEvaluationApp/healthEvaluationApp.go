@@ -15,6 +15,10 @@ type IMySql interface {
 	GetUserLogin(un string, pw string) models.Users
 	SaveUser(user models.Users) (bool, error)
 	UpdateUser(user models.Users) bool
+	GetAssessments(category int) []models.Assessment
+	CreateAssessmentDetails(id int, userId int, ans string) bool
+	GetHabits(id int) []models.Habit
+	DeleteHabit(id int) bool
 }
 
 func NewMySqlRepo() IMySql {
@@ -48,4 +52,21 @@ func (svc *service) SaveUser(user models.Users) (bool, error) {
 
 func (svc *service) UpdateUser(user models.Users) bool {
 	return svc.MySql.UpdateUser(user)
+}
+
+func (svc *service) GetAssessments(category int) []models.Assessment {
+	return svc.MySql.GetAssessments(category)
+}
+
+func (svc *service) CreateAssessmentDetails(id int, userId int, ans string) bool {
+	return svc.MySql.CreateAssessmentDetails(id, userId, ans)
+}
+
+func (svc *service) GetHabits(id int) []models.Habit {
+	return svc.MySql.GetHabits(id)
+
+}
+
+func (svc *service) DeleteHabit(id int) bool {
+	return svc.MySql.DeleteHabit(id)
 }

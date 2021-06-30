@@ -5,7 +5,7 @@ SERVICE_VERSION: 1.0.0
 
 #mysql configurations
 MYSQL_USERNAME: root
-MYSQL_PASSWORD: Develop@2021
+MYSQL_PASSWORD: makmoinee@2018
 DB_NAME: he
 DB_DRIVER: mysql
-CONNECTION_STRING: tcp(127.0.0.1:3306)/
+CONNECTION_STRING: tcp(localhost:3306)/

@@ -11,6 +11,7 @@ import (
 	"healtEvaluationApp/internal/utility"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 
 	log "github.com/sirupsen/logrus"
 
@@ -36,6 +37,10 @@ func initiateRoute(httpService *service.Service, routeHandler *routesHandler) {
 	httpService.Router.Post(common.GetUserResource, routeHandler.GetUserLogin)
 	httpService.Router.Post(common.SaveUserResource, routeHandler.SaveUser)
 	httpService.Router.Put(common.UpdateUserResource, routeHandler.UpdateUser)
+	httpService.Router.Post(common.GetAssessmentResource, routeHandler.GetAssessment)
+	httpService.Router.Get(common.GetHabitsResource, routeHandler.GetHabits)
+	httpService.Router.Delete(common.GetHabitsResource, routeHandler.DeleteHabit)
+	httpService.Router.Post(common.CreateAssessmentDetailsResource, routeHandler.CreateAssessmentDetails)
 }
 
 type routesHandler struct {
@@ -45,6 +50,11 @@ type IUserRoutes interface {
 	GetUserLogin(w http.ResponseWriter, r *http.Request)
 	SaveUser(w http.ResponseWriter, r *http.Request)
 	UpdateUser(w http.ResponseWriter, r *http.Request)
+	GetAssessment(w http.ResponseWriter, r *http.Request)
+	CreateAssessmentDetails(w http.ResponseWriter, r *http.Request)
+	GetHabits(w http.ResponseWriter, r *http.Request)
+	DeleteHabit(w http.ResponseWriter, r *http.Request)
+	InsertHabit(w http.ResponseWriter, r *http.Request)
 }
 
 func newRoutes() *routesHandler {
@@ -180,11 +190,157 @@ func (svc *routesHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	response.Success(w, resp)
 }
 
+func (svc *routesHandler) GetAssessment(w http.ResponseWriter, r *http.Request) {
+	log.Info("Getting Assessment Informations")
+	utility.Debug("POST", "INVOKED")
+
+	validRequest := AssessRequest{}
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Errorf("Error reading body: %v", err)
+		utility.LogPrometheusErr("Error reading body: %v", err.Error())
+		errBody := response.BuildErrorMessage(http.StatusBadRequest, err.Error())
+		response.Error(w, errBody, http.StatusBadRequest)
+		return
+	}
+	unmarshalErr := json.Unmarshal(body, &validRequest)
+	if unmarshalErr != nil {
+		log.Errorf("Error unmarshal body: %v", unmarshalErr)
+		utility.LogPrometheusErr("Unmarshal error", unmarshalErr.Error())
+		errBody := response.BuildErrorMessage(http.StatusBadRequest, unmarshalErr.Error())
+		response.Error(w, errBody, http.StatusBadRequest)
+		return
+	}
+
+	fmt.Println(string(body))
+	fmt.Println(strconv.Itoa(validRequest.Id))
+	assessment := svc.HealthEvaluationApp.GetAssessments(validRequest.Category)
+	response.Success(w, assessment)
+	return
+
+}
+
+func (svc *routesHandler) CreateAssessmentDetails(w http.ResponseWriter, r *http.Request) {
+	log.Info("Creating User Assessment Details")
+	utility.Debug("POST", "INVOKED")
+	validRequest := AssessRequest{}
+	resp := IResponse{}
+
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Errorf("Error reading body: %v", err)
+		utility.LogPrometheusErr("Error reading body: %v", err.Error())
+		errBody := response.BuildErrorMessage(http.StatusBadRequest, err.Error())
+		response.Error(w, errBody, http.StatusBadRequest)
+		return
+	}
+	unmarshalErr := json.Unmarshal(body, &validRequest)
+	if unmarshalErr != nil {
+		log.Errorf("Error unmarshal body: %v", unmarshalErr)
+		utility.LogPrometheusErr("Unmarshal error", unmarshalErr.Error())
+		errBody := response.BuildErrorMessage(http.StatusBadRequest, unmarshalErr.Error())
+		response.Error(w, errBody, http.StatusBadRequest)
+		return
+	}
+
+	isCreated := svc.HealthEvaluationApp.CreateAssessmentDetails(validRequest.Id, validRequest.UserID, validRequest.Answer)
+	if isCreated {
+		resp.InsertSuccessful = true
+		response.Success(w, resp)
+		return
+	} else {
+		errBody := response.BuildErrorMessage(http.StatusBadRequest, "Failed to save assessment")
+		response.Error(w, errBody, http.StatusBadRequest)
+		return
+	}
+}
+
+func (svc *routesHandler) GetHabits(w http.ResponseWriter, r *http.Request) {
+	log.Info("Getting User Habits Information")
+	utility.Debug("POST", "INVOKED")
+	query := r.URL.Query()
+	hid := query.Get("id")
+	id, err := strconv.Atoi(hid)
+	if err != nil {
+		errBody := response.BuildErrorMessage(http.StatusBadRequest, err.Error())
+		response.Error(w, errBody, http.StatusBadRequest)
+		return
+	}
+	habits := svc.HealthEvaluationApp.GetHabits(id)
+	response.Success(w, habits)
+	return
+
+}
+func (svc *routesHandler) DeleteHabit(w http.ResponseWriter, r *http.Request) {
+	log.Info("Deleting habit invoked")
+	utility.Debug("DELETE", "INVOKED")
+	query := r.URL.Query()
+	hid := query.Get("id")
+	id, err := strconv.Atoi(hid)
+	if err != nil {
+		errBody := response.BuildErrorMessage(http.StatusBadRequest, err.Error())
+		response.Error(w, errBody, http.StatusBadRequest)
+		return
+	}
+	habits := svc.HealthEvaluationApp.DeleteHabit(id)
+	response.Success(w, habits)
+	return
+
+}
+
+func (svc *routesHandler) InsertHabit(w http.ResponseWriter, r *http.Request){
+	log.Info("inserting habit invoked")
+	utility.Debug("POST", "INVOKED")
+
+	validRequest := models.Habit{}
+	resp := IResponse{}
+
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Errorf("Error reading body: %v", err)
+		utility.LogPrometheusErr("Error reading body: %v", err.Error())
+		errBody := response.BuildErrorMessage(http.StatusBadRequest, err.Error())
+		response.Error(w, errBody, http.StatusBadRequest)
+		return
+	}
+	unmarshalErr := json.Unmarshal(body, &validRequest)
+	if unmarshalErr != nil {
+		log.Errorf("Error unmarshal body: %v", unmarshalErr)
+		utility.LogPrometheusErr("Unmarshal error", unmarshalErr.Error())
+		errBody := response.BuildErrorMessage(http.StatusBadRequest, unmarshalErr.Error())
+		response.Error(w, errBody, http.StatusBadRequest)
+		return
+	}
+
+	// isCreated := svc.HealthEvaluationApp.CreateAssessmentDetails(validRequest.Id, validRequest.UserID, validRequest.Answer)
+	// if isCreated {
+	// 	resp.InsertSuccessful = true
+	// 	response.Success(w, resp)
+	// 	return
+	// } else {
+	// 	errBody := response.BuildErrorMessage(http.StatusBadRequest, "Failed to save assessment")
+	// 	response.Error(w, errBody, http.StatusBadRequest)
+	// 	return
+	// }
+}
+
+type HabitRequest struct {
+	Id int `json:"id"`
+}
+
 type IResponse struct {
 	UpdateSuccessful bool `json:"isUpdateSuccessful"`
 	InsertSuccessful bool `json:"isInsertSuccessful"`
 	IsExist          bool `json:"isExist"`
 }
+type AssessRequest struct {
+	Id       int    `json:"id,omitempty"`
+	UserID   int    `json:"userId,omitempty"`
+	Answer   string `json:"answer,omitempty"`
+	Category int    `json:"category"`
+}
+
+
 
 func getProperStatCodes(msg string, statCode int) int {
 	if msg == common.TokenNotPresent {

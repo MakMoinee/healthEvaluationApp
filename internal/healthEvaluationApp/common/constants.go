@@ -27,4 +27,17 @@ const (
 	TokenNotPresent     = "there is no valid token passed. login again"
 
 	GenerateTokenQueryClause = "INSERT INTO `tokens` (`TokenString`,`UserID`,`DateCreated`) VALUES ('%v',%v,now())"
+
+	GetAssessment                   = "SELECT * FROM `assessment` where `Category`=%v"
+	GetAssessmentResource           = "/assessments"
+	CreateAssessmentDetailsResource = "/create/detail/assessments"
+	InsertAssementDetails           = "INSERT INTO `assessment_details` (`AssessmentID`,`UserID`,`Answer`,`DateAnswered`) " +
+		"VALUES (%v,%v,'%v',NOW())"
+
+	GetHabits           = "SELECT * FROM `habit` where UserID=%v"
+	GetHabitsResource   = "/habits"
+	DeleteHabit         = "DELETE FROM `habit` where HabitID=%v"
+	DeleteHabitResource = "/habits/delete"
+	InsertHabit         = "INSERT INTO `habits` (`HabitName`,`HabitTime`,`HabitDate`,`UserID`,`HabitStatus`) VALUES ('%v','%v','%v',%v,%v)"
+	InsertHabitResource = "/habits"
 )

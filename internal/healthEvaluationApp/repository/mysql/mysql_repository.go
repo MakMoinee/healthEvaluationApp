@@ -34,6 +34,12 @@ type IMySql interface {
 	// GetTokenById - Get the token of the specified user
 	GetTokenById(userToken string) models.Tokens
 	GenerateNewToken(userId int) (models.Tokens, error)
+
+	GetAssessments(category int) []models.Assessment
+	CreateAssessmentDetails(id int, userId int, ans string) bool
+
+	GetHabits(id int) []models.Habit
+	DeleteHabit(id int) bool
 }
 
 func NewService() IMySql {
@@ -168,6 +174,117 @@ func (svc *service) UpdateUser(user models.Users) bool {
 		log.Error("Failed to update, User is not in the db. ")
 	}
 	return isUpdate
+}
+
+// assessment  ------------------------------------
+func (svc *service) GetAssessments(category int) []models.Assessment {
+	list := []models.Assessment{}
+	single := models.Assessment{}
+
+	svc.Db = svc.openDBConnection()
+
+	str := fmt.Sprintf(common.GetAssessment, category)
+	log.Printf("Executing Query: %v", str)
+	// perform a db.Query get
+	result, err := svc.Db.Query(str)
+	if err != nil {
+		log.Error(err.Error())
+		return list
+	}
+
+	defer svc.Db.Close()
+
+	for result.Next() {
+		err := result.Scan(&single.AssessmentID,
+			&single.Sequence,
+			&single.Question,
+			&single.AnswerA,
+			&single.AnswerB,
+			&single.AnswerC,
+			&single.AnswerD,
+			&single.AnswerAPoints,
+			&single.AnswerBPoints,
+			&single.AnswerCPoints,
+			&single.AnswerDPoints, &single.Status, &single.Category)
+		if err != nil {
+			log.Error(err.Error())
+			return list
+		}
+
+		list = append(list, single)
+
+	}
+
+	return list
+}
+func (svc *service) CreateAssessmentDetails(id int, userId int, ans string) bool {
+	queryString := fmt.Sprintf(common.InsertAssementDetails, id, userId, ans)
+	svc.Db = svc.openDBConnection()
+	updateResult, err := svc.Db.Query(queryString)
+	defer svc.Db.Close()
+	if err != nil {
+		log.Errorf(err.Error())
+		return false
+	}
+
+	defer updateResult.Close()
+	log.Printf("Successfully created record!")
+	return true
+}
+
+func (svc *service) GetHabits(id int) []models.Habit {
+	list := []models.Habit{}
+	single := models.Habit{}
+
+	svc.Db = svc.openDBConnection()
+
+	str := fmt.Sprintf(common.GetHabits, id)
+	log.Printf("Executing Query: %v", str)
+	// perform a db.Query get
+	result, err := svc.Db.Query(str)
+	if err != nil {
+		log.Error(err.Error())
+		return list
+	}
+
+	defer svc.Db.Close()
+
+	for result.Next() {
+		err := result.Scan(&single.HabitID,
+			&single.UserID,
+			&single.HabitName,
+			&single.HabitTime,
+			&single.HabitDate,
+			&single.HabitStatus)
+		if err != nil {
+			log.Error(err.Error())
+			return list
+		}
+
+		list = append(list, single)
+
+	}
+
+	return list
+}
+
+func (svc *service) DeleteHabit(id int) bool {
+
+	// checks the user if exist
+
+	svc.Db = svc.openDBConnection()
+	queryString := fmt.Sprintf(common.DeleteHabit, id)
+	updateResult, err := svc.Db.Query(queryString)
+	defer svc.Db.Close()
+	if err != nil {
+		log.Errorf(err.Error())
+		return false
+	}
+
+	defer updateResult.Close()
+	log.Printf("Successfully updated record!")
+	return true
+
 }
 
 func (svc *service) openDBConnection() *sql.DB {

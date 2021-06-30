@@ -49,3 +49,35 @@ type Tokens struct {
 	UserID      int    `json:"userId,omitempty"`
 	DateCreated string `json:"dateCreation,omitempty"`
 }
+
+type Habit struct {
+	HabitID     int    `json:"HabitID"`
+	UserID      int    `json:"UserID"`
+	HabitName   string `json:"HabitName"`
+	HabitTime   string `json:"HabitTime"`
+	HabitDate   string `json:"HabitDate"`
+	HabitStatus int    `json:"HabitStatus"`
+}
+
+type Todo struct {
+	TodoID    int    `json:"TodoID"`
+	Note      string `json:"Note"`
+	StartDate string `json:"StartDate"`
+	EndDate   string `json:"EndDate"`
+}
+
+type Assessment struct {
+	AssessmentID  int    `json:"AssessmentID"`
+	Sequence      int    `json:"Sequence"`
+	Question      string `json:"Question"`
+	AnswerA       string `json:"AnswerA"`
+	AnswerB       string `json:"AnswerB"`
+	AnswerC       string `json:"AnswerC`
+	AnswerD       string `json:"AnswerD"`
+	AnswerAPoints string `json:"AnswerAPoints"`
+	AnswerBPoints string `json:"AnswerBPoints"`
+	AnswerCPoints string `json:"AnswerCPoints`
+	AnswerDPoints string `json:"AnswerDPoints"`
+	Status        int    `json:"Status"`
+	Category      int    `json:"Category"`
+}
