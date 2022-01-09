@@ -40,4 +40,5 @@ const (
 	DeleteHabitResource = "/habits/delete"
 	InsertHabit         = "INSERT INTO `habits` (`HabitName`,`HabitTime`,`HabitDate`,`UserID`,`HabitStatus`) VALUES ('%v','%v','%v',%v,%v)"
 	InsertHabitResource = "/habits"
+	GetData             = "/get/data"
 )

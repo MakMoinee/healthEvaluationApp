@@ -41,6 +41,7 @@ func initiateRoute(httpService *service.Service, routeHandler *routesHandler) {
 	httpService.Router.Get(common.GetHabitsResource, routeHandler.GetHabits)
 	httpService.Router.Delete(common.GetHabitsResource, routeHandler.DeleteHabit)
 	httpService.Router.Post(common.CreateAssessmentDetailsResource, routeHandler.CreateAssessmentDetails)
+	httpService.Router.Get(common.GetData, routeHandler.GetData)
 }
 
 type routesHandler struct {
@@ -55,12 +56,17 @@ type IUserRoutes interface {
 	GetHabits(w http.ResponseWriter, r *http.Request)
 	DeleteHabit(w http.ResponseWriter, r *http.Request)
 	InsertHabit(w http.ResponseWriter, r *http.Request)
+	GetData(w http.ResponseWriter, r *http.Request)
 }
 
 func newRoutes() *routesHandler {
 	return &routesHandler{
 		HealthEvaluationApp: healthevaluationapp.NewMySqlRepo(),
 	}
+}
+
+func (svc *routesHandler) GetData(w http.ResponseWriter, r *http.Request) {
+	response.Success(w, "Hello World")
 }
 
 // GetUserLogin route handler
