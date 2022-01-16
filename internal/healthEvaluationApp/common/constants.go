@@ -41,4 +41,6 @@ const (
 	InsertHabit         = "INSERT INTO `habits` (`HabitName`,`HabitTime`,`HabitDate`,`UserID`,`HabitStatus`) VALUES ('%v','%v','%v',%v,%v)"
 	InsertHabitResource = "/habits"
 	GetData             = "/get/data"
+	Ping                = "/ping"
+	Land                = "/"
 )

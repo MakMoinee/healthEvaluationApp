@@ -42,6 +42,8 @@ func initiateRoute(httpService *service.Service, routeHandler *routesHandler) {
 	httpService.Router.Delete(common.GetHabitsResource, routeHandler.DeleteHabit)
 	httpService.Router.Post(common.CreateAssessmentDetailsResource, routeHandler.CreateAssessmentDetails)
 	httpService.Router.Get(common.GetData, routeHandler.GetData)
+	httpService.Router.Get(common.Ping, routeHandler.Ping)
+	httpService.Router.Get(common.Land, routeHandler.Land)
 }
 
 type routesHandler struct {
@@ -57,12 +59,24 @@ type IUserRoutes interface {
 	DeleteHabit(w http.ResponseWriter, r *http.Request)
 	InsertHabit(w http.ResponseWriter, r *http.Request)
 	GetData(w http.ResponseWriter, r *http.Request)
+	Ping(w http.ResponseWriter, r *http.Request)
+	Land(w http.ResponseWriter, r *http.Request)
 }
 
 func newRoutes() *routesHandler {
 	return &routesHandler{
 		HealthEvaluationApp: healthevaluationapp.NewMySqlRepo(),
 	}
+}
+
+func (svc *routesHandler) Land(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set(common.ContentTypeKey, common.ContentTypeValue)
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("<3"))
+}
+
+func (svc *routesHandler) Ping(w http.ResponseWriter, r *http.Request) {
+	response.Success(w, struct{ Status string }{Status: "OK"})
 }
 
 func (svc *routesHandler) GetData(w http.ResponseWriter, r *http.Request) {

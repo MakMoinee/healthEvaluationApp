@@ -6,6 +6,7 @@ import (
 	"healtEvaluationApp/internal/pkg/service"
 	"healtEvaluationApp/internal/utility"
 	"log"
+	"os"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -13,7 +14,11 @@ import (
 
 func main() {
 	config.Set()
-	port := config.Registry.GetString("SERVER_PORT")
+	port := os.Getenv("HTTP_PORT")
+	if len(port) == 0 {
+		port = config.Registry.GetString("SERVER_PORT")
+	}
+
 	isProfiling := config.Registry.GetBool("SERVER_ENABLE_PROFILING")
 	service := service.NewService(port)
 	service.EnableProfiling(isProfiling)
